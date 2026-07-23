@@ -2,93 +2,68 @@
 database.py
 ===========
 
-Common SQLAlchemy database module for the Enterprise E-Commerce
-Order Management System.
+Common SQLAlchemy database module for the Enterprise
+E-Commerce Order Management System.
 
-Every team member should import from this file instead of creating
-their own database connection.
+Every team member must import Base and get_db_session()
+from this file instead of creating their own database connection.
 
-Examples
---------
-
-Model:
+Example:
 
     from database import Base
-    from sqlalchemy import Column, Integer, String
+    from database import get_db_session
 
     class Customer(Base):
         __tablename__ = "customers"
 
-        customer_id = Column(Integer, primary_key=True)
-        customer_name = Column(String(100))
-
-Database Session:
-
-    from database import get_db_session
-
-    with get_db_session() as session:
-        session.add(customer)
-
-Initialize Database:
-
-    from database import init_db
+Later, after all model files are created, call:
 
     init_db()
+
+to create all tables.
 """
 
-import os
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine, event
-from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from utilities.logger import get_logger
 
-# ============================================================================
+# =============================================================================
 # Logger
-# ============================================================================
+# =============================================================================
 
 logger = get_logger(__name__)
 
-# ============================================================================
-# Database Configuration
-# ============================================================================
+# =============================================================================
+# Database Configuration (MySQL)
+# =============================================================================
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///enterprise_ecommerce.db"
+DATABASE_URL = URL.create(
+    drivername="mysql+pymysql",
+    username="root",
+    password="YOUR_PASSWORD",     # Change this on your own system
+    host="localhost",
+    port=3306,
+    database="ecommerce_oms"
 )
 
-CONNECT_ARGS = (
-    {"check_same_thread": False}
-    if DATABASE_URL.startswith("sqlite")
-    else {}
-)
+# =============================================================================
+# Engine
+# =============================================================================
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args=CONNECT_ARGS,
     echo=False,
     future=True
 )
 
-# ============================================================================
-# Enable SQLite Foreign Keys
-# ============================================================================
-
-if DATABASE_URL.startswith("sqlite"):
-
-    @event.listens_for(Engine, "connect")
-    def enable_sqlite_foreign_keys(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
-
-# ============================================================================
+# =============================================================================
 # Session Factory
-# ============================================================================
+# =============================================================================
 
 SessionLocal = sessionmaker(
     bind=engine,
@@ -97,25 +72,26 @@ SessionLocal = sessionmaker(
     future=True
 )
 
-# ============================================================================
-# Declarative Base
-# ============================================================================
+# =============================================================================
+# Base Class
+# =============================================================================
 
 Base = declarative_base()
 
-# ============================================================================
+# =============================================================================
 # Database Session
-# ============================================================================
+# =============================================================================
 
 
 @contextmanager
 def get_db_session():
     """
-    Returns a database session.
+    Creates a database session.
 
-    Automatically commits on success,
-    rolls back on failure,
-    and always closes the session.
+    Automatically:
+    - Commits on success
+    - Rolls back on failure
+    - Closes the session
     """
 
     session = SessionLocal()
@@ -151,37 +127,36 @@ def get_db_session():
 
         session.close()
 
-# ============================================================================
-# Database Engine
-# ============================================================================
 
+# =============================================================================
+# Get Engine
+# =============================================================================
 
 def get_engine():
     """
     Returns the shared SQLAlchemy engine.
     """
+
     return engine
 
-# ============================================================================
-# Initialize Database
-# ============================================================================
 
+# =============================================================================
+# Initialize Database
+# =============================================================================
 
 def init_db():
     """
-    Creates all tables that are registered with Base.
+    Creates every table registered with SQLAlchemy Base.
 
     NOTE:
-    Import every model before calling this function.
+    Import all model files before calling this function.
     """
 
     try:
 
         Base.metadata.create_all(bind=engine)
 
-        logger.info(
-            "Database initialized successfully."
-        )
+        logger.info("Database initialized successfully.")
 
     except SQLAlchemyError:
 
@@ -192,14 +167,14 @@ def init_db():
 
         raise
 
-# ============================================================================
-# Drop Database
-# ============================================================================
 
+# =============================================================================
+# Drop Database Tables
+# =============================================================================
 
 def drop_all_tables():
     """
-    Drops every table from the database.
+    Drops all tables.
 
     Use only during development/testing.
     """
@@ -208,9 +183,7 @@ def drop_all_tables():
 
         Base.metadata.drop_all(bind=engine)
 
-        logger.warning(
-            "All database tables dropped."
-        )
+        logger.warning("All database tables dropped.")
 
     except SQLAlchemyError:
 
@@ -221,27 +194,31 @@ def drop_all_tables():
 
         raise
 
-# ============================================================================
-# Test
-# ============================================================================
+
+# =============================================================================
+# Test Database Connection
+# =============================================================================
 
 if __name__ == "__main__":
 
-    logger.info("Testing database module...")
+    logger.info("Testing database connection...")
 
-    init_db()
+    try:
 
-    with get_db_session() as session:
+        with engine.connect() as connection:
 
-        logger.info(
-            "Database session created successfully."
+            logger.info("MySQL connection established successfully.")
+
+            print("\nConnected Successfully!")
+            print(f"Database : {DATABASE_URL.database}")
+            print(f"Host     : {DATABASE_URL.host}")
+            print(f"Port     : {DATABASE_URL.port}")
+
+    except Exception:
+
+        logger.error(
+            "Unable to connect to MySQL.",
+            exc_info=True
         )
 
-        logger.info(
-            "Session Active : %s",
-            session.is_active
-        )
-
-    print("\nDatabase module executed successfully.")
-    print(f"Database URL : {DATABASE_URL}")
-    print(f"Engine : {engine}")
+        print("Database connection failed.")
