@@ -4,6 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from database import SessionLocal
 from models.payment_model import Payment
 from models.shipment_model import Shipment
+from models.order_model import Order
+from models.address_model import Address
 
 
 class PaymentService:
@@ -29,7 +31,7 @@ class PaymentService:
                 order_id=order_id,
                 amount=amount,
                 payment_method=payment_method,
-                payment_status="Paid"
+                payment_status="SUCCESS"
             )
 
             self.database_session.add(payment)
@@ -126,7 +128,7 @@ class PaymentService:
                 print("Payment not found.")
                 return
 
-            payment.payment_status = "Refunded"
+            payment.payment_status = "REFUNDED"
 
             self.database_session.commit()
 
@@ -145,17 +147,37 @@ class PaymentService:
     def create_shipment(
         self,
         order_id,
-        tracking_number,
-        courier_name
+        address_id,
+        tracking_number
     ):
 
         try:
 
+            order = self.database_session.scalar(
+                select(Order).where(
+                    Order.order_id == order_id
+                )
+            )
+
+            if order is None:
+                print("Order not found.")
+                return
+
+            address = self.database_session.scalar(
+                select(Address).where(
+                    Address.address_id == address_id
+                )
+            )
+
+            if address is None:
+                print("Address not found.")
+                return
+
             shipment = Shipment(
                 order_id=order_id,
+                address_id=address_id,
                 tracking_number=tracking_number,
-                courier_name=courier_name,
-                shipment_status="Pending"
+                shipment_status="PROCESSING"
             )
 
             self.database_session.add(shipment)
@@ -168,8 +190,7 @@ class PaymentService:
 
             self.database_session.rollback()
 
-            print(error)
-
+            print(error)    
     # ==========================================================
     # Update Shipment
     # ==========================================================
@@ -228,9 +249,10 @@ class PaymentService:
             print(f"Shipment ID     : {shipment.shipment_id}")
             print(f"Order ID        : {shipment.order_id}")
             print(f"Tracking Number : {shipment.tracking_number}")
-            print(f"Courier         : {shipment.courier_name}")
+            print(f"Address ID      : {shipment.address_id}")
             print(f"Status          : {shipment.shipment_status}")
             print(f"Shipped Date    : {shipment.shipped_date}")
+            print(f"Delivered Date  : {shipment.delivered_date}")
 
         except SQLAlchemyError as error:
 

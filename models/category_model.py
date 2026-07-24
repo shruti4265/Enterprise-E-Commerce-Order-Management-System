@@ -17,18 +17,14 @@ class Category(Base):
     __tablename__ = "categories"
 
     category_id = Column(Integer, primary_key=True, autoincrement=True)
-    category_name = Column(String(100), nullable=False, unique=True)
+    name = Column(String(100), nullable=False, unique=True)
+    description = Column(String(255))
 
     # One Category -> Many Products
     product_list = relationship(
         "Product",
-        back_populates="category_object",
-        cascade="all, delete-orphan"
+        back_populates="category_object"
     )
 
     def __repr__(self):
-        return (
-            f"<Category("
-            f"category_id={self.category_id}, "
-            f"category_name='{self.category_name}')>"
-        )
+        return f"<Category(category_id={self.category_id}, name='{self.name}')>"

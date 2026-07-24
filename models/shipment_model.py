@@ -20,37 +20,41 @@ class Shipment(Base):
         nullable=False
     )
 
-    tracking_number = Column(
-        String(100),
-        nullable=False,
-        unique=True
-    )
-
-    courier_name = Column(
-        String(100),
+    address_id = Column(
+        Integer,
+        ForeignKey("addresses.address_id"),
         nullable=False
     )
 
     shipment_status = Column(
         String(30),
         nullable=False,
-        default="Pending"
+        default="PROCESSING"
+    )
+
+    tracking_number = Column(
+        String(50),
+        nullable=True
     )
 
     shipped_date = Column(
         DateTime,
-        nullable=False,
+        nullable=True,
         server_default=func.now()
     )
 
-    def __repr__(self):
+    delivered_date = Column(
+        DateTime,
+        nullable=True
+    )
 
+    def __repr__(self):
         return (
             f"Shipment("
             f"shipment_id={self.shipment_id}, "
             f"order_id={self.order_id}, "
-            f"tracking_number='{self.tracking_number}', "
-            f"courier_name='{self.courier_name}', "
-            f"shipment_status='{self.shipment_status}'"
+            f"address_id={self.address_id}, "
+            f"shipment_status='{self.shipment_status}', "
+            f"tracking_number='{self.tracking_number}'"
             f")"
         )

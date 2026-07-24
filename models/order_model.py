@@ -39,10 +39,10 @@ class Order(Base):
         nullable=False
     )
 
-    order_status = Column(
+    status = Column(
         String(30),
         nullable=False,
-        default="Pending"
+        default="PENDING"
     )
 
     def __repr__(self):
@@ -52,6 +52,6 @@ class Order(Base):
             f"order_id={self.order_id}, "
             f"customer_id={self.customer_id}, "
             f"total_amount={self.total_amount}, "
-            f"status='{self.order_status}'"
+            f"status='{self.status}'"
             f")"
         )

@@ -8,6 +8,8 @@ from models.order_item_model import OrderItem
 
 from models.product_model import Product
 from models.inventory_model import Inventory
+from models.customer_model import Customer
+
 
 
 class OrderService:
@@ -24,40 +26,44 @@ class OrderService:
 
         try:
 
-            existing_cart = self.database_session.scalar(
+            # Check whether the customer exists
+            customer = self.database_session.scalar(
+                select(Customer).where(
+                    Customer.customer_id == customer_id
+                )
+            )
 
+            if customer is None:
+                print("Customer not found.")
+                return
+
+            # Check whether the customer already has a cart
+            existing_cart = self.database_session.scalar(
                 select(Cart).where(
                     Cart.customer_id == customer_id
                 )
-
             )
 
             if existing_cart:
-
                 print("Cart already exists.")
-
                 return existing_cart
 
+            # Create a new cart
             cart = Cart(
-
                 customer_id=customer_id
-
             )
 
             self.database_session.add(cart)
-
             self.database_session.commit()
+            self.database_session.refresh(cart)
 
             print("Cart created successfully.")
-
             return cart
 
         except SQLAlchemyError as error:
 
             self.database_session.rollback()
-
-            print(error)
-
+            print(f"Database Error: {error}")
     # ==========================================================
     # Add Product To Cart
     # ==========================================================

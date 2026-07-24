@@ -13,7 +13,32 @@ from services.customer_service import (
     update_customer,
     delete_customer,
 )
+from services.product_service import (
+    add_category,
+    view_categories,
+    update_category,
+    delete_category,
+    add_product,
+    update_product,
+    delete_product,
+    view_product,
+    view_all_products,
+    search_product,
+    search_by_category,
+)
+from services.report_service import (
+    monthly_sales_report,
+    best_selling_products,
+    customer_purchase_history,
+    pending_orders,
+    revenue_by_category,
+    low_stock_products_report,
+)
+from services.inventory_service import InventoryService
 from exceptions.custom_exception import ValidationError, DatabaseError
+from services.order_service import OrderService
+from services.payment_service import PaymentService
+
 
 
 def display_menu():
@@ -100,7 +125,362 @@ def customer_menu():
         except DatabaseError as e:
             print(f"\nDatabase error: {e}")
 
+def handle_product_menu():
+    while True:
+        print("\n--- Product Management ---")
+        print("1. Add Category")
+        print("2. View Categories")
+        print("3. Add Product")
+        print("4. View All Products")
+        print("5. Search Product")
+        print("6. Update Product")
+        print("7. Delete Product")
+        print("0. Back to Main Menu")
+        choice = input("Enter your choice: ").strip()
 
+        if choice == "1":
+            name = input("Category name: ").strip()
+            print(add_category(name))
+
+        elif choice == "2":
+            for c in view_categories():
+                print(f"{c.category_id} - {c.name}")
+
+        elif choice == "3":
+            name = input("Product name: ").strip()
+            desc = input("Description: ").strip()
+            price = float(input("Price: ").strip())
+            qty = int(input("Initial quantity: ").strip())
+            active = input("Active? (y/n): ").strip().lower() == "y"
+            cat_id = int(input("Category ID: ").strip())
+            print(add_product(name, desc, price, qty, active, cat_id))
+
+        elif choice == "4":
+            for p in view_all_products():
+                print(p)
+
+        elif choice == "5":
+            val = input("Search by name or ID: ").strip()
+            for p in search_product(val):
+                print(p)
+        elif choice == "6":
+            pid = int(input("Product ID to update: ").strip())
+            name = input("New name: ").strip()
+            desc = input("New description: ").strip()
+            price = float(input("New price: ").strip())
+            active = input("Active? (y/n): ").strip().lower() == "y"
+            cat_id = int(input("New category ID: ").strip())
+            print(update_product(pid, name, desc, price, active, cat_id))
+
+        elif choice == "7":
+            pid = int(input("Product ID to delete: ").strip())
+            print(delete_product(pid))
+
+        elif choice == "0":
+            break
+
+        else:
+            print("Invalid choice.")
+def handle_inventory_menu():
+    inventory_service = InventoryService()
+
+    while True:
+        print("\n--- Inventory Management ---")
+        print("1. Add Stock")
+        print("2. Remove Stock")
+        print("3. Update Stock")
+        print("4. View Stock (by Product ID)")
+        print("5. View All Inventory")
+        print("6. Low Stock Products")
+        print("7. Stock Transaction History")
+        print("0. Back to Main Menu")
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+            pid = int(input("Product ID: ").strip())
+            qty = int(input("Quantity to add: ").strip())
+            reason = input("Reason (optional, press Enter to skip): ").strip() or "Stock Added"
+            inventory_service.add_stock(pid, qty, reason)
+
+        elif choice == "2":
+            pid = int(input("Product ID: ").strip())
+            qty = int(input("Quantity to remove: ").strip())
+            reason = input("Reason (optional, press Enter to skip): ").strip() or "Stock Removed"
+            inventory_service.remove_stock(pid, qty, reason)
+
+        elif choice == "3":
+            pid = int(input("Product ID: ").strip())
+            qty = int(input("New quantity: ").strip())
+            reason = input("Reason (optional, press Enter to skip): ").strip() or "Stock Adjusted"
+            inventory_service.update_stock(pid, qty, reason)
+
+        elif choice == "4":
+            pid = int(input("Product ID: ").strip())
+            inventory_service.view_stock(pid)
+
+        elif choice == "5":
+            inventory_service.view_inventory()
+
+        elif choice == "6":
+            inventory_service.low_stock_products()
+
+        elif choice == "7":
+            pid_input = input("Product ID (press Enter for full history): ").strip()
+            pid = int(pid_input) if pid_input else None
+            inventory_service.stock_history(pid)
+
+        elif choice == "0":
+            inventory_service.close_session()
+            break
+
+        else:
+            print("Invalid choice.")
+def handle_cart_order_menu():
+    order_service = OrderService()
+
+    while True:
+        print("\n--- Cart & Order Management ---")
+        print("1. Create Cart")
+        print("2. Add Product to Cart")
+        print("3. View Cart")
+        print("4. Update Cart Item")
+        print("5. Remove Cart Item")
+        print("6. Place Order")
+        print("7. View Orders")
+        print("8. View Order Details")
+        print("9. Cancel Order")
+        print("10. Clear Cart")
+        print("0. Back")
+
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+            customer_id = int(input("Customer ID: "))
+            order_service.create_cart(customer_id)
+
+        elif choice == "2":
+            customer_id = int(input("Customer ID: "))
+            product_id = int(input("Product ID: "))
+            quantity = int(input("Quantity: "))
+            order_service.add_to_cart(customer_id, product_id, quantity)
+
+        elif choice == "3":
+            customer_id = int(input("Customer ID: "))
+            order_service.view_cart(customer_id)
+
+        elif choice == "4":
+            cart_item_id = int(input("Cart Item ID: "))
+            quantity = int(input("New Quantity: "))
+            order_service.update_cart_item(cart_item_id, quantity)
+
+        elif choice == "5":
+            cart_item_id = int(input("Cart Item ID: "))
+            order_service.remove_cart_item(cart_item_id)
+
+        elif choice == "6":
+            customer_id = int(input("Customer ID: "))
+            order_service.place_order(customer_id)
+
+        elif choice == "7":
+            customer_id = int(input("Customer ID: "))
+            order_service.view_orders(customer_id)
+
+        elif choice == "8":
+            order_id = int(input("Order ID: "))
+            order_service.view_order_details(order_id)
+
+        elif choice == "9":
+            order_id = int(input("Order ID: "))
+            order_service.cancel_order(order_id)
+
+        elif choice == "10":
+            customer_id = int(input("Customer ID: "))
+            order_service.clear_cart(customer_id)
+
+        elif choice == "0":
+            order_service.close_session()
+            break
+
+        else:
+            print("Invalid choice.")
+def handle_payment_shipment_menu():
+
+    payment_service = PaymentService()
+
+    while True:
+
+        print("\n--- Payment & Shipment ---")
+        print("1. Make Payment")
+        print("2. Verify Payment")
+        print("3. Payment History")
+        print("4. Refund Payment")
+        print("5. Create Shipment")
+        print("6. Update Shipment")
+        print("7. Track Shipment")
+        print("8. Delivery Status")
+        print("0. Back")
+
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+
+            order_id = int(input("Order ID: "))
+            amount = float(input("Amount: "))
+
+            print("\nPayment Methods")
+            print("CARD")
+            print("UPI")
+            print("NET_BANKING")
+            print("COD")
+            print("WALLET")
+
+            payment_method = input("Payment Method: ").strip().upper()
+
+            payment_service.make_payment(
+                order_id,
+                amount,
+                payment_method
+            )
+
+        elif choice == "2":
+
+            payment_id = int(input("Payment ID: "))
+            payment_service.verify_payment(payment_id)
+
+        elif choice == "3":
+
+            payment_service.payment_history()
+
+        elif choice == "4":
+
+            payment_id = int(input("Payment ID: "))
+            payment_service.refund_payment(payment_id)
+
+        elif choice == "5":
+
+            order_id = int(input("Order ID: "))
+            address_id = int(input("Address ID: "))
+            tracking_number = input("Tracking Number: ").strip()
+
+            payment_service.create_shipment(
+                order_id,
+                address_id,
+                tracking_number
+            )
+
+        elif choice == "6":
+
+            shipment_id = int(input("Shipment ID: "))
+
+            print("\nShipment Status")
+            print("PROCESSING")
+            print("SHIPPED")
+            print("OUT_FOR_DELIVERY")
+            print("DELIVERED")
+            print("RETURNED")
+
+            shipment_status = input("Status: ").strip().upper()
+
+            payment_service.update_shipment(
+                shipment_id,
+                shipment_status
+            )
+
+        elif choice == "7":
+
+            shipment_id = int(input("Shipment ID: "))
+            payment_service.track_shipment(shipment_id)
+
+        elif choice == "8":
+
+            payment_service.delivery_status()
+
+        elif choice == "0":
+
+            payment_service.close_session()
+            break
+
+        else:
+
+            print("Invalid choice.")
+def handle_reports_menu():
+
+    while True:
+
+        print("\n--- Reports & Analytics ---")
+        print("1. Monthly Sales Report")
+        print("2. Best Selling Products")
+        print("3. Customer Purchase History")
+        print("4. Pending Orders")
+        print("5. Revenue by Category")
+        print("6. Low Stock Products")
+        print("0. Back")
+
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+
+            report = monthly_sales_report()
+
+            if not report:
+                print("No records found.")
+            else:
+                for row in report:
+                    print(row)
+
+        elif choice == "2":
+
+            report = best_selling_products()
+
+            if not report:
+                print("No records found.")
+            else:
+                for row in report:
+                    print(row)
+
+        elif choice == "3":
+
+            customer_id = int(input("Customer ID: "))
+
+            report = customer_purchase_history(customer_id)
+
+            print(report)
+
+        elif choice == "4":
+
+            report = pending_orders()
+
+            if not report:
+                print("No records found.")
+            else:
+                for row in report:
+                    print(row)
+
+        elif choice == "5":
+
+            report = revenue_by_category()
+
+            if not report:
+                print("No records found.")
+            else:
+                for row in report:
+                    print(row)
+
+        elif choice == "6":
+
+            report = low_stock_products_report()
+
+            if not report:
+                print("No records found.")
+            else:
+                for row in report:
+                    print(row)
+
+        elif choice == "0":
+            break
+
+        else:
+            print("Invalid choice.")
 def main():
     # Create database tables (only after models are imported)
     try:
@@ -118,19 +498,19 @@ def main():
             customer_menu()
 
         elif choice == "2":
-            print("\nProduct Management module will be integrated here.")
+            handle_product_menu()
 
         elif choice == "3":
-            print("\nInventory Management module will be integrated here.")
+            handle_inventory_menu()
 
         elif choice == "4":
-            print("\nCart & Order Management module will be integrated here.")
+            handle_cart_order_menu()
 
         elif choice == "5":
-            print("\nPayment & Shipment module will be integrated here.")
+            handle_payment_shipment_menu()
 
         elif choice == "6":
-            print("\nReports module will be integrated here.")
+            handle_reports_menu()
 
         elif choice == "0":
             print("\nThank you for using the system.")

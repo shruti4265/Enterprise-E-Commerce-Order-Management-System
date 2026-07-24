@@ -40,10 +40,6 @@ class OrderItem(Base):
         nullable=False
     )
 
-    subtotal = Column(
-        Float,
-        nullable=False
-    )
 
     def __repr__(self):
 
@@ -53,6 +49,5 @@ class OrderItem(Base):
             f"order_id={self.order_id}, "
             f"product_id={self.product_id}, "
             f"quantity={self.quantity}, "
-            f"subtotal={self.subtotal}"
             f")"
         )

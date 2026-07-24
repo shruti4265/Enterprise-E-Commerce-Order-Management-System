@@ -231,32 +231,27 @@ class InventoryService:
     # ==========================================================
 
     def low_stock_products(self):
-
         try:
-
-            low_stock_list = self.database_session.scalars(
+            low_stock_list = self.database_session.execute(
                 select(Inventory).where(
                     Inventory.quantity <= Inventory.low_stock_threshold
                 )
-            ).all()
+            ).scalars().all()
 
-            if not low_stock_list:
-                print("No low stock products found.")
+            if len(low_stock_list) == 0:
+                print("\nNo low stock products found.")
                 return
 
             print("\n========== LOW STOCK PRODUCTS ==========")
 
             for inventory in low_stock_list:
-
                 print("----------------------------------------")
                 print(f"Product ID : {inventory.product_id}")
                 print(f"Quantity   : {inventory.quantity}")
                 print(f"Threshold  : {inventory.low_stock_threshold}")
 
-        except SQLAlchemyError as error:
-
-            print(error)
-
+        except Exception as e:
+            print(f"Error: {e}")
     # ==========================================================
     # Stock History
     # ==========================================================

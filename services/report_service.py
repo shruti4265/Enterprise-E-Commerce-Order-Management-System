@@ -33,6 +33,8 @@ from models.order_item_model import OrderItem
 from models.product_model import Product
 from models.category_model import Category
 from models.inventory_model import Inventory
+print("Loaded report_service.py")
+print(">>> USING report_service.py <<<")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -42,29 +44,28 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------- 1. MONTHLY SALES REPORT ---------------------------- #
-
 def monthly_sales_report():
-    """
-    Total revenue grouped by month, based on non-cancelled orders.
-    Returns a list of dicts: [{"month": "2026-01", "total_revenue": 250000.0}, ...]
-    """
 
     session = SessionLocal()
 
     try:
+
         results = (
             session.query(
                 func.date_format(Order.order_date, "%Y-%m").label("month"),
                 func.sum(Order.total_amount).label("total_revenue")
             )
-            .filter(Order.order_status != "Cancelled")
+            .filter(Order.status != "CANCELLED")
             .group_by("month")
             .order_by("month")
             .all()
         )
 
         report = [
-            {"month": row.month, "total_revenue": float(row.total_revenue or 0)}
+            {
+                "month": row.month,
+                "total_revenue": float(row.total_revenue or 0)
+            }
             for row in results
         ]
 
@@ -73,37 +74,35 @@ def monthly_sales_report():
 
     except SQLAlchemyError as e:
         logger.error(f"Error generating monthly sales report: {e}")
-        return f"Error generating monthly sales report: {e}"
+        return []
 
     finally:
         session.close()
-
-
 # ---------------------------- 2. BEST SELLING PRODUCTS ---------------------------- #
 
 def best_selling_products(limit=10):
-    """
-    Products ranked by total quantity sold across all order items.
-    Returns a list of dicts: [{"product_name": "Laptop", "units_sold": 120}, ...]
-    """
 
     session = SessionLocal()
 
     try:
+
         results = (
             session.query(
-                Product.product_name,
+                Product.name.label("product_name"),
                 func.sum(OrderItem.quantity).label("units_sold")
             )
             .join(OrderItem, OrderItem.product_id == Product.product_id)
-            .group_by(Product.product_id, Product.product_name)
+            .group_by(Product.product_id, Product.name)
             .order_by(func.sum(OrderItem.quantity).desc())
             .limit(limit)
             .all()
         )
 
         report = [
-            {"product_name": row.product_name, "units_sold": int(row.units_sold or 0)}
+            {
+                "product_name": row.product_name,
+                "units_sold": int(row.units_sold or 0)
+            }
             for row in results
         ]
 
@@ -112,7 +111,7 @@ def best_selling_products(limit=10):
 
     except SQLAlchemyError as e:
         logger.error(f"Error generating best selling products report: {e}")
-        return f"Error generating best selling products report: {e}"
+        return []
 
     finally:
         session.close()
@@ -216,7 +215,6 @@ def pending_orders():
 def revenue_by_category():
     """
     Total revenue grouped by product category.
-    Returns a list of dicts: [{"category_name": "Electronics", "revenue": 500000.0}, ...]
     """
 
     session = SessionLocal()
@@ -224,18 +222,36 @@ def revenue_by_category():
     try:
         results = (
             session.query(
-                Category.category_name,
-                func.sum(OrderItem.subtotal).label("revenue")
+                Category.name.label("category_name"),
+                func.sum(
+                    OrderItem.quantity * OrderItem.unit_price
+                ).label("revenue")
             )
-            .join(Product, Product.category_id == Category.category_id)
-            .join(OrderItem, OrderItem.product_id == Product.product_id)
-            .group_by(Category.category_id, Category.category_name)
-            .order_by(func.sum(OrderItem.subtotal).desc())
+            .join(
+                Product,
+                Product.category_id == Category.category_id
+            )
+            .join(
+                OrderItem,
+                OrderItem.product_id == Product.product_id
+            )
+            .group_by(
+                Category.category_id,
+                Category.name
+            )
+            .order_by(
+                func.sum(
+                    OrderItem.quantity * OrderItem.unit_price
+                ).desc()
+            )
             .all()
         )
 
         report = [
-            {"category_name": row.category_name, "revenue": float(row.revenue or 0)}
+            {
+                "category_name": row.category_name,
+                "revenue": float(row.revenue or 0)
+            }
             for row in results
         ]
 
@@ -244,31 +260,29 @@ def revenue_by_category():
 
     except SQLAlchemyError as e:
         logger.error(f"Error generating revenue by category report: {e}")
-        return f"Error generating revenue by category report: {e}"
+        return []
 
     finally:
         session.close()
 
-
 # ---------------------------- 6. LOW STOCK PRODUCTS ---------------------------- #
 
 def low_stock_products_report():
-    """
-    Products whose current inventory is at or below their low stock threshold.
-    Returns a list of dicts: [{"product_name": ..., "quantity": ..., "threshold": ...}, ...]
-    """
 
     session = SessionLocal()
 
     try:
+
         results = (
             session.query(
-                Product.product_name,
+                Product.name.label("product_name"),
                 Inventory.quantity,
                 Inventory.low_stock_threshold
             )
             .join(Inventory, Inventory.product_id == Product.product_id)
-            .filter(Inventory.quantity <= Inventory.low_stock_threshold)
+            .filter(
+                Inventory.quantity <= Inventory.low_stock_threshold
+            )
             .order_by(Inventory.quantity)
             .all()
         )
@@ -277,7 +291,7 @@ def low_stock_products_report():
             {
                 "product_name": row.product_name,
                 "quantity": row.quantity,
-                "threshold": row.low_stock_threshold,
+                "threshold": row.low_stock_threshold
             }
             for row in results
         ]
@@ -287,7 +301,7 @@ def low_stock_products_report():
 
     except SQLAlchemyError as e:
         logger.error(f"Error generating low stock products report: {e}")
-        return f"Error generating low stock products report: {e}"
+        return []
 
     finally:
         session.close()
