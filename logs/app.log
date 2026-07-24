@@ -1,0 +1,10 @@
+2026-07-24 22:56:24 | INFO     | database | Database initialized successfully.
+2026-07-24 23:09:14 | INFO     | database | Database initialized successfully.
+2026-07-24 23:09:46 | INFO     | services.customer_service | Customer added successfully.
+2026-07-24 23:11:52 | INFO     | database | Database initialized successfully.
+2026-07-24 23:12:09 | INFO     | services.customer_service | Customer added successfully.
+2026-07-24 23:12:18 | INFO     | services.customer_service | Customer list fetched successfully.
+2026-07-24 23:12:33 | INFO     | services.customer_service | Customer fetched successfully.
+2026-07-24 23:12:48 | INFO     | services.customer_service | Customer search completed.
+2026-07-24 23:13:17 | INFO     | services.customer_service | Customer updated successfully.
+2026-07-24 23:13:24 | INFO     | services.customer_service | Customer deleted successfully.

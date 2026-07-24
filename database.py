@@ -45,7 +45,7 @@ logger = get_logger(__name__)
 DATABASE_URL = URL.create(
     drivername="mysql+pymysql",
     username="root",
-    password="YOUR_PASSWORD",     # Change this on your own system
+    password="Shruti",     # Change this on your own system
     host="localhost",
     port=3306,
     database="ecommerce_oms"
@@ -69,6 +69,7 @@ SessionLocal = sessionmaker(
     bind=engine,
     autoflush=False,
     autocommit=False,
+    expire_on_commit=False,
     future=True
 )
 
