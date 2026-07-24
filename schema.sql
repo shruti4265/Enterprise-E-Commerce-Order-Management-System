@@ -289,3 +289,35 @@ FROM inventory i
 JOIN products p ON p.product_id = i.product_id
 WHERE i.quantity <= i.low_stock_threshold
 ORDER BY i.quantity ASC;
+ALTER TABLE order_items
+ADD COLUMN subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00;
+ALTER TABLE orders
+CHANGE COLUMN status order_status
+ENUM('PENDING','CONFIRMED','SHIPPED','DELIVERED','CANCELLED')
+NOT NULL DEFAULT 'PENDING';
+CREATE TABLE order_items (
+    order_item_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
+
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+CREATE TABLE orders (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    order_status ENUM(
+        'PENDING',
+        'CONFIRMED',
+        'SHIPPED',
+        'DELIVERED',
+        'CANCELLED'
+    ) DEFAULT 'PENDING',
+    total_amount DECIMAL(12,2) DEFAULT 0.00,
+
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
