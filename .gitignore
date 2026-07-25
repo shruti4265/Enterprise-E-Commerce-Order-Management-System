@@ -1,0 +1,7 @@
+cd ~/OneDrive/Desktop/Project-3
+cat > .gitignore << 'EOF'
+__pycache__/
+*.pyc
+logs/
+.env
+EOF
