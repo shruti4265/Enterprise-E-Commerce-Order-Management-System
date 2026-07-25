@@ -60,12 +60,12 @@ sharing a common database layer, logger, and exception hierarchy.
 
 | Module | Owner | Tables |
 |---|---|---|
-| Customer Management | Member 1 | `customers`, `addresses` |
-| Product & Category | Member 2 | `categories`, `products` |
-| Inventory | Member 3 | `inventory`, `stock_transactions` |
-| Cart & Order | Member 4 | `carts`, `cart_items`, `orders`, `order_items` |
-| Payment & Shipment | Member 5 | `payments`, `shipments` |
-| Reports & Analytics | Member 6 | (reads across all tables) |
+| Customer Management | Anjali | `customers`, `addresses` |
+| Product & Category | Samrridhi | `categories`, `products` |
+| Inventory | Chhaya | `inventory`, `stock_transactions` |
+| Cart & Order | Cheshta | `carts`, `cart_items`, `orders`, `order_items` |
+| Payment & Shipment | Lavanya | `payments`, `shipments` |
+| Reports & Analytics | Shruti | (reads across all tables) |
 
 ## Setup
 
